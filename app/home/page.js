@@ -11,6 +11,7 @@ import UserEventReport from './components/UserEventReport';
 import Navbar from './components/Navbar';
 import { toast, Toaster } from 'react-hot-toast';
 import AdminActivityReportModal from './components/AdminActivityReportModal';
+import AllEventsModal from './components/AllEventsModal';
 
 export default function HomePage() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function HomePage() {
   const [events, setEvents] = useState([]);
   const [joinedEvents, setJoinedEvents] = useState({});
   const [loading, setLoading] = useState(true);
+
   const [modals, setModals] = useState({
     confirm: false,
     report: false,
@@ -25,14 +27,19 @@ export default function HomePage() {
     createEvent: false,
     activityReport: false,
   });
+
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [confirmData, setConfirmData] = useState({});
   const [eventReport, setEventReport] = useState([]);
 
+  // 🟡 modal state สำหรับโหมดแก้ไข
+  const [modalEditMode, setModalEditMode] = useState(false);
+  const [modalEventData, setModalEventData] = useState(null);
+
   useEffect(() => {
     const fetchUserSession = async () => {
       try {
-        const res = await fetch('/api/users'); // 🟢 ใช้ session
+        const res = await fetch('/api/users');
         if (!res.ok) throw new Error();
         const data = await res.json();
         setUser(data);
@@ -47,7 +54,7 @@ export default function HomePage() {
 
   const fetchEvents = async (role) => {
     try {
-      const res = await fetch(`/api/events?role=${role}`);
+      const res = await fetch(`/api/events?role=${role}&status=active`);
       setEvents(await res.json());
     } catch {
       toast.error('เกิดข้อผิดพลาดในการโหลดกิจกรรม');
@@ -114,23 +121,6 @@ export default function HomePage() {
     }
   };
 
-  const handleApprove = async (joinId, status) => {
-    try {
-      const res = await fetch('/api/join', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ join_id: joinId, status })
-      });
-      if (!res.ok) return toast.error('ไม่สามารถอัปเดตสถานะได้');
-      toast.success('อัปเดตสถานะสำเร็จ');
-      fetchEvents(user.role);
-      fetchJoinedEvents(user.id);
-      if (selectedActivity) handleViewReport(selectedActivity);
-    } catch {
-      toast.error('เกิดข้อผิดพลาดในการอนุมัติ');
-    }
-  };
-
   const handleLogout = async () => {
     await fetch('/api/logout', { method: 'POST' });
     router.push('/login');
@@ -139,7 +129,17 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#f9f9f9] animate-fade-in transition-all duration-700">
       <Toaster />
-      <Navbar role={user?.role} onAddEvent={() => setModals(prev => ({ ...prev, createEvent: true }))} onOpenReport={() => setModals(prev => ({ ...prev, activityReport: true }))} onLogout={handleLogout} />
+
+      <Navbar
+        role={user?.role}
+        onAddEvent={() => {
+          setModalEditMode(false);               // โหมดเพิ่ม
+          setModalEventData(null);
+          setModals(prev => ({ ...prev, createEvent: true }));
+        }}
+        onOpenReport={() => setModals(prev => ({ ...prev, activityReport: true }))}
+        onLogout={handleLogout}
+      />
 
       <div className="flex flex-wrap justify-center gap-x-3 gap-y-8 px-6 py-6 max-w-full">
         {events.map(event => {
@@ -147,7 +147,7 @@ export default function HomePage() {
           return (
             <div key={event.id} className="w-[330px] transition-transform duration-300 hover:scale-105">
               <ActivityCard
-                activity={{ ...event, name_ac: event.title, description_ac: event.description }}
+                activity={event}
                 role={user?.role}
                 isJoined={joinedEvents[key] === 'ลงทะเบียนสำเร็จ'}
                 joinStatus={joinedEvents[key]}
@@ -156,12 +156,18 @@ export default function HomePage() {
                 onClick={() => setSelectedActivity(event)}
                 onViewReport={() => handleViewReport(event)}
                 onEditSuccess={() => fetchEvents(user?.role)}
+                onEdit={(activity) => {
+                  setModalEditMode(true);                // โหมดแก้ไข
+                  setModalEventData(activity);
+                  setModals(prev => ({ ...prev, createEvent: true }));
+                }}
               />
             </div>
           );
         })}
       </div>
 
+      {/* ✅ MODALS */}
       {modals.confirm && (
         <ConfirmJoinModal
           confirmData={confirmData}
@@ -187,17 +193,40 @@ export default function HomePage() {
         <AdminEventReport
           activity={selectedActivity}
           report={eventReport}
-          onApprove={handleApprove}
+          onApprove={(joinId, status) => {
+            fetch(`/api/join`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ join_id: joinId, status })
+            }).then(res => {
+              if (res.ok) {
+                toast.success('อัปเดตสถานะสำเร็จ');
+                fetchEvents(user.role);
+                fetchJoinedEvents(user.id);
+                if (selectedActivity) handleViewReport(selectedActivity);
+              } else {
+                toast.error('ไม่สามารถอัปเดตสถานะได้');
+              }
+            });
+          }}
           onClose={() => setModals(prev => ({ ...prev, report: false }))}
         />
       )}
 
       {modals.createEvent && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex justify-center items-center p-4">
+        <div className="fixed inset-0 bg-black/40  z-50 flex justify-center items-center p-4 overflow-y-auto">
           <CreateEvent
-            onCancel={() => setModals(prev => ({ ...prev, createEvent: false }))}
-            onSuccess={() => {
+            editMode={modalEditMode}
+            eventData={modalEventData}
+            onCancel={() => {
               setModals(prev => ({ ...prev, createEvent: false }));
+              setModalEditMode(false);
+              setModalEventData(null);
+            }}
+            onEditSuccess={() => {
+              setModals(prev => ({ ...prev, createEvent: false }));
+              setModalEditMode(false);
+              setModalEventData(null);
               fetchEvents(user?.role);
             }}
           />
@@ -205,7 +234,16 @@ export default function HomePage() {
       )}
 
       {modals.activityReport && (
-        <AdminActivityReportModal onClose={() => setModals(prev => ({ ...prev, activityReport: false }))} />
+        <AdminActivityReportModal
+          onClose={() => setModals(prev => ({ ...prev, activityReport: false }))}
+        />
+      )}
+
+      {modals.allEvents && (
+        <AllEventsModal
+          open={modals.allEvents}
+          onClose={() => setModals(prev => ({ ...prev, allEvents: false }))}
+        />
       )}
     </div>
   );

@@ -9,9 +9,9 @@ export async function GET(req) {
     const search = searchParams.get('search')?.trim() || '';
     const suggest = searchParams.get('suggest')?.trim() || '';
     const expired = searchParams.get('expired') === 'true';
+    const status = searchParams.get('status'); // ✅ new
     const isAdmin = role === 'admin';
 
-    // ✅ เคส: แสดงคำแนะนำแบบ realtime
     if (suggest) {
       const [rows] = await pool.query(
         `SELECT DISTINCT title FROM events WHERE title LIKE ? ORDER BY title LIMIT 10`,
@@ -20,22 +20,23 @@ export async function GET(req) {
       const keywords = rows.map(row => row.title);
       return NextResponse.json({ keywords });
     }
-
-    // ✅ เคส: ค้นหากิจกรรม (หรือทั้งหมด)
     let query = `
       SELECT 
         e.id, e.title, e.description, e.type, 
         e.date_start, e.date_end, e.max_participants,
+        e.status,
         COUNT(j.id) AS current_participants
       FROM events e
       LEFT JOIN joins j ON j.event_id = e.id AND j.status = 'ลงทะเบียนสำเร็จ'
     `;
+
     const conditions = [];
     const values = [];
 
-    if (expired) {
-      conditions.push('DATE(e.date_end) < CURDATE()');
-    } else if (!isAdmin) {
+    if (status && status !== 'all') {
+      conditions.push('e.status = ?');
+      values.push(status);
+    } else if (!isAdmin && !expired) {
       conditions.push('DATE(e.date_end) >= CURDATE()');
     }
 
@@ -58,6 +59,7 @@ export async function GET(req) {
     return NextResponse.json({ message: 'เกิดข้อผิดพลาดในการดึงข้อมูลกิจกรรม' }, { status: 500 });
   }
 }
+
 
 // ✅ POST - สร้างกิจกรรม
 export async function POST(req) {

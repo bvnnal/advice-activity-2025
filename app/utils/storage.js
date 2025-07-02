@@ -26,11 +26,11 @@ export async function getUserRole() {
 }
 
 // ✅ สำหรับกรณียังใช้ localStorage เก่าในบางที่ (optional)
-export function getUserIdFromLocal() {
-  if (typeof window === 'undefined') return null;
-  const user = localStorage.getItem('user');
-  return user ? JSON.parse(user)?.id : null;
-}
+// export function getUserIdFromLocal() {
+//   if (typeof window === 'undefined') return null;
+//   const user = localStorage.getItem('user');
+//   return user ? JSON.parse(user)?.id : null;
+// }
 
 // ✅ สำหรับอนาคต: เคลียร์ session ผ่าน API logout
 export function clearSession() {

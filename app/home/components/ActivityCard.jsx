@@ -24,6 +24,7 @@ export default function ActivityCard({
   onClick,
   onViewReport,
   onEditSuccess,
+  onEdit  ,
 }) {
   const {
     title,
@@ -35,7 +36,6 @@ export default function ActivityCard({
     type,
   } = activity;
 
-  const [editMode, setEditMode] = useState(false);
   const isFull = current_participants >= max_participants;
   const percent = Math.min((current_participants / max_participants) * 100, 100);
   const stop = (fn) => (e) => (e.stopPropagation(), fn?.());
@@ -58,7 +58,7 @@ export default function ActivityCard({
     <div className="flex gap-3 w-full justify-between px-10 mt-auto mb-2">
       {role === 'admin' ? (
         <>
-          <button onClick={stop(() => setEditMode(true))} className={`${baseBtn} bg-yellow-500 hover:bg-yellow-600`}>แก้ไข</button>
+          <button onClick={stop(() => onEdit?.(activity))} className={`${baseBtn} bg-yellow-500 hover:bg-yellow-600`}>แก้ไข</button>
           <button onClick={stop(onViewReport)} className={`${baseBtn} bg-blue-500 hover:bg-blue-600`}>รายงาน</button>
         </>
       ) : (
@@ -161,7 +161,7 @@ export default function ActivityCard({
 
 
       {/* Edit Modal */}
-      {editMode && (
+      {/* {editMode && (
         <div className="fixed inset-0 bg-black/40 z-50 flex justify-center items-center p-4 overflow-y-auto animate-fade-in">
           <CreateEvent
             eventData={activity}
@@ -172,8 +172,8 @@ export default function ActivityCard({
               onEditSuccess?.();
             }}
           />
-    </div>
-    )}
+        </div>
+      )} */}
     </>
   );
 }
