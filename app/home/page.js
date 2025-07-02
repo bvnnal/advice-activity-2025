@@ -40,12 +40,13 @@ export default function HomePage() {
     const fetchUserSession = async () => {
       try {
         const res = await fetch('/api/users');
-        if (!res.ok) throw new Error();
         const data = await res.json();
+        console.log("✅ User data:", data);
         setUser(data);
         if (data.role === 'user') await fetchJoinedEvents(data.id);
         fetchEvents(data.role);
-      } catch {
+      } catch (err) {
+        console.error("❌ Failed to fetch user:", err);
         router.push('/login');
       }
     };
@@ -54,10 +55,12 @@ export default function HomePage() {
 
   const fetchEvents = async (role) => {
     try {
-      const res = await fetch(`/api/events?role=${role}&status=active`);
-      setEvents(await res.json());
-    } catch {
-      toast.error('เกิดข้อผิดพลาดในการโหลดกิจกรรม');
+      const res = await fetch(`/api/events?role=${role}`);
+      const json = await res.json();
+      console.log("✅ Events loaded:", json);
+      setEvents(json);
+    } catch (err) {
+      console.error("❌ Error loading events:", err);
     }
   };
 

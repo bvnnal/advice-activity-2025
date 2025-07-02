@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import pool from '../../database/db';
@@ -15,7 +17,7 @@ export async function GET(req) {
     // 📋 รายงานกิจกรรมที่เข้าร่วมของผู้ใช้คนเดียว (user + mode=user)
     if (role === 'user' && mode === 'user') {
       if (!userId) {
-        const cookieStore = cookies(); // ✅ async-safe แล้ว
+        const cookieStore = cookies();
         userId = cookieStore.get('session_user')?.value;
       }
 

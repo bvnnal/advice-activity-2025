@@ -29,15 +29,28 @@ export default function Navbar({ role, onAddEvent, onOpenReport }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const Button = ({ label, onClick, showIcon = false }) => (
-    <button
-      onClick={onClick}
-      className={`text-white font-medium rounded-lg text-sm px-6 py-4 text-center w-180px flex items-center justify-center gap-5 transition 
-        ${label === 'เพิ่มกิจกรรม' ? 'bg-green-500 hover:bg-green-600' : 'bg-blue-500 hover:bg-blue-600'}`}
-    >
-      {showIcon && <span>➕</span>}<span>{label}</span>
-    </button>
-  );
+  const Button = ({ label, onClick, showIcon = false }) => {
+    const isAdd = label === 'เพิ่มกิจกรรม';
+    const isReport = label === 'รายงานกิจกรรม';
+
+    return (
+      <button
+        onClick={onClick}
+        className={`font-medium rounded-lg text-sm px-4 py-3 text-center w-180px flex items-center justify-center gap-5 transition
+          ${
+            isAdd
+              ? 'bg-green-500 hover:bg-green-600 text-white'
+              : isReport
+              ? 'bg-white border border-blue-500 text-blue-600 hover:bg-blue-50'
+              : 'bg-blue-500 hover:bg-blue-600 text-white'
+          }`}
+      >
+        {showIcon && <span>➕</span>}
+        <span>{label}</span>
+      </button>
+    );
+  };
+
 
   const MenuItem = ({ label, icon, onClick }) => {
     const handleClick = async () => {

@@ -46,9 +46,9 @@ export default function ActivityCard({
   const getStatusColor = () => {
     switch (joinStatus) {
       case 'รอดำเนินการ':
-        return 'text-blue-500 bg-neutral-50';
+        return 'text-yellow-500 bg-neutral-50';
       case 'ลงทะเบียนสำเร็จ':
-        return 'text-green-800 bg-green-100';
+        return 'text-green-500 bg-neutral-50';
       default:
         return 'text-gray-800 bg-gray-100';
     }
@@ -148,7 +148,7 @@ export default function ActivityCard({
           </div>
         </div>
 
-        <div className="flex flex-col justify-end gap-2 mt-auto mb-3">
+        <div className="flex flex-col justify-end gap-2 mt-auto mb-5">
           {(joinStatus === 'รอดำเนินการ' || joinStatus === 'ลงทะเบียนสำเร็จ') && (
             <p className={`text-base font-semibold  px-3 py-2 w-fit justify-between rounded-md shadow-sm ${getStatusColor()}`}>
               สถานะของคุณ: {joinStatus}
@@ -158,22 +158,6 @@ export default function ActivityCard({
         </div>
 
       </div>
-
-
-      {/* Edit Modal */}
-      {/* {editMode && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex justify-center items-center p-4 overflow-y-auto animate-fade-in">
-          <CreateEvent
-            eventData={activity}
-            editMode
-            onCancel={() => setEditMode(false)}
-            onEditSuccess={() => {
-              setEditMode(false);
-              onEditSuccess?.();
-            }}
-          />
-        </div>
-      )} */}
     </>
   );
 }
